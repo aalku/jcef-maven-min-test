@@ -12,33 +12,30 @@ import me.friwi.jcefmaven.MavenCefAppHandlerAdapter;
 import me.friwi.jcefmaven.UnsupportedPlatformException;
 
 /**
- * TODO This should be a different JAR so we could tell dev-tools not to reload
- * it.
- * 
- * In and that way auto-reload might work. In that case we should avoid those
- * calls to System.exit() that are around and exit the app only when the user
- * really wants to close it. Not sure how we could tell.
- * 
+ * Handles CefApp initialization in a way it's compatible with Spring Boot dev-tools reload
  */
 @Component
 public class CefAppWrapperBean {
-	private static CefApp cefApp;
 	static {
 		try {
 			System.err.println("initJCEF");
-			cefApp = initJCEF(new String[0]);
+			initJCEF(new String[0]);
 		} catch (IOException | UnsupportedPlatformException | InterruptedException | CefInitializationException e) {
 			throw new RuntimeException(e);
 		}
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override
 			public void run() {
-				cefApp.dispose();
+				CefApp.getInstance().dispose();
 			}
 		});
 	}
 	
 	private static CefApp initJCEF(String[] args) throws IOException, UnsupportedPlatformException, InterruptedException, CefInitializationException {
+		if (CefApp.getState().compareTo(CefAppState.NEW) > 0) {
+			// We can't set it up even if we wanted to. Just return it.
+			return CefApp.getInstance();
+		}
         // (0) Initialize CEF using the maven loader
         CefAppBuilder builder = new CefAppBuilder();
         // windowless_rendering_enabled must be set to false if not wanted. 
@@ -74,6 +71,6 @@ public class CefAppWrapperBean {
 	}
 	
 	public CefApp getCefApp() {
-		return cefApp;
+		return CefApp.getInstance();
 	}
 }

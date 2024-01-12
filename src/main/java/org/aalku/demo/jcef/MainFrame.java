@@ -139,18 +139,13 @@ public class MainFrame extends JFrame {
             @Override
             public void windowClosing(WindowEvent e) {
             	if (!closed.getAndSet(true)) {
-            		try {
-            			dispose();
-            		} finally {
-            			System.exit(0);
-            		}
+           			dispose();
 				}
             }
         });
 	}
 	
 	public void close() {
-		System.err.println("Closing main frame (int)...");
 		this.dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
 	}
 }

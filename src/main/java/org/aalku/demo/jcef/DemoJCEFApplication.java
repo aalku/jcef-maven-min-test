@@ -1,5 +1,7 @@
 package org.aalku.demo.jcef;
 
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.IOException;
 
 import org.springframework.beans.factory.DisposableBean;
@@ -25,8 +27,22 @@ public class DemoJCEFApplication implements ApplicationRunner, InitializingBean,
 	@Autowired
 	private CefAppWrapperBean cefAppWrapperBean;
 	
+	private WindowAdapter onCloseShutdownEventHandler = new WindowAdapter() {
+		@Override
+		public void windowClosing(WindowEvent e) {
+			new Thread() {
+				{
+					this.setDaemon(true);
+				}
+
+				public void run() {
+					System.exit(0);
+				};
+			}.start();
+		}
+	};
+	
 	public static void main(String[] args) {
-	    System.setProperty("spring.devtools.restart.enabled", "false");
 		// Boot backend
 		SpringApplication app = new SpringApplication(DemoJCEFApplication.class);
 		app.setHeadless(false);
@@ -43,15 +59,17 @@ public class DemoJCEFApplication implements ApplicationRunner, InitializingBean,
 
     @EventListener
     public void onApplicationEvent(final ServletWebServerInitializedEvent event) throws IOException, UnsupportedPlatformException, InterruptedException, CefInitializationException {
+    	// Boot frontend
         int port = event.getWebServer().getPort();
 		System.err.println("Opening main frame...");
 		this.mainFrame = new MainFrame("http://localhost:" + port, cefAppWrapperBean.getCefApp());
+		this.mainFrame.addWindowListener(onCloseShutdownEventHandler);
     }
-
+    
 	@Override
 	public void destroy() throws Exception {
-		// Boot frontend
 		System.err.println("Closing main frame...");
+		this.mainFrame.removeWindowListener(onCloseShutdownEventHandler); // So it doesn't shut down the app by itself
 		this.mainFrame.close();
 	}
 
