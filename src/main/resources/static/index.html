@@ -7,6 +7,37 @@
 
 <body>
 	<h1>Hello world!</h1>
+	<pre id="clock"></pre>
+	<pre id="console"></pre>
+	<script>
+		let clock = document.getElementById("clock");
+		let console = document.getElementById("console");
+		window.cefQuery({
+			request: 'HelloWorld',
+			persistent: false,
+			onSuccess: function (response) {
+				console.append(document.createTextNode("Success: " + response + "\r\n"));
+			},
+			onFailure: function (error_code, error_message) {
+				console.append(document.createTextNode("Failure: " + error_message + "\r\n"));
+			}
+		});
+		function clockTick() {
+			window.cefQuery({
+				request: 'clock',
+				persistent: false,
+				onSuccess: function (response) {
+					clock.textContent = response + "\r\n";
+					clockTick();
+					return true;
+				},
+				onFailure: function (error_code, error_message) {
+					console.append(document.createTextNode("Failure: " + error_message + "\r\n"));
+				}
+			});
+		}
+		clockTick();
+	</script>
 </body>
 
 
